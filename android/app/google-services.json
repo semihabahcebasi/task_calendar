@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "194347560421",
+    "project_id": "task-calendar-semiha",
+    "storage_bucket": "task-calendar-semiha.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:194347560421:android:b9b74687e6dd03d017530c",
+        "android_client_info": {
+          "package_name": "com.example.task_calendar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBI43-Q7KwPECO15oUuQD7c5FvcV4kjI6Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
