@@ -11,7 +11,7 @@ class AuthService {
   // böylece kimlik doğrulama işlemlerini gerçekleştirebiliriz
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   //instance ile FirebaseFirestore sınıfının bir örneğini oluşturuyoruz,
-  // böylece veritabanı işlemlerini gerçekleştirebiliriz
+  // böylece veritabanı işlemlerini gerçekleştirebiliriz.
 
   // Kayıt Olma Fonksiyonu
   Future<String?> kayitOl(
