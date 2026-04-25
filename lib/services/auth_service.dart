@@ -53,4 +53,57 @@ class AuthService {
       return e.toString();
     }
   }
+
+  //home sayfasında görev ekleme ve silme işlemleri için iki fonksiyon daha ekleyelim
+
+  // auth_service.dart içine bu metotları ekle:
+
+  // 1. Görev Ekleme: Kullanıcının ID'sini ve seçilen tarihi baz alarak kayıt yapar
+  Future<void> gorevEkle(String baslik, String tarih) async {
+    String uid = _auth.currentUser!.uid;
+
+    await _firestore.collection("Tasks").add({
+      "userId": uid,
+      "baslik": baslik,
+      "tarih": tarih,
+      "tamamlandi": false,
+      "olusturmaTarihi":
+          FieldValue.serverTimestamp(), // Görevleri sıraya koymak için
+    });
+  }
+
+  // 2. Görevleri Getirme (Stream): Veritabanı değiştikçe bize yeni listeyi akıtır
+  Stream<QuerySnapshot> gorevleriGetir(String tarih) {
+    String uid = _auth.currentUser!.uid;
+
+    return _firestore
+        .collection("Tasks")
+        .where("userId", isEqualTo: uid) // "==" yerine isEqualTo: kullanıyoruz
+        .where("tarih", isEqualTo: tarih)
+        .orderBy("olusturmaTarihi", descending: true) // En yeni en üstte
+        .snapshots(); // Canlı yayın başlasın!
+  }
+
+  // 3. Görev Silme: Belgenin benzersiz ID'sini kullanarak siler
+  Future<void> gorevSil(String docId) async {
+    await _firestore.collection("Tasks").doc(docId).delete();
+  }
+
+  // radio butonları için görev durumunu değiştirme fonksiyonu
+
+  Future<void> gorevDurumDegistir(String docId, bool yeniDurum) async {
+    await _firestore.collection("Tasks").doc(docId).update({
+      "tamamlandi":
+          yeniDurum, // Sadece bu alanı güncelliyoruz, diğerleri sabit kalır
+    });
+  }
+
+  //çıkış yapma fonksiyonu
+  Future<void> cikisYap() async {
+    try {
+      await _auth.signOut();
+    } catch (e) {
+      print("Çıkış hatası: $e");
+    }
+  }
 }
