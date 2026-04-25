@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:task_calendar/screens/home_screen.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart'; // Kayıt sayfasına gitmek için
+import 'home_screen.dart'; // Giriş başarılıysa ana sayfaya gitmek için
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -54,10 +56,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     _sifreController.text,
                   );
                   if (sonuc == "Başarılı") {
+                    // Giriş başarılı uyarısını yine de kısa bir süre gösterebiliriz
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Giriş Başarılı!")),
+                      const SnackBar(
+                        content: Text("Giriş Başarılı! Hoş geldin."),
+                      ),
                     );
-                    // Burada ileride Ana Sayfaya yönlendirme yapacağız
+
+                    // ANA SAYFAYA YÖNLENDİRME
+                    // Navigator.pushReplacement kullanıyoruz ki geri dönüldüğünde login ekranı gelmesin.
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HomeScreen(),
+                      ),
+                    );
                   } else {
                     ScaffoldMessenger.of(
                       context,
