@@ -244,40 +244,37 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
                 ),
-                itemCount:
-                    ayinGunSayisi, // Dinamik gün sayısı (artık 31'e sabit değil)
+                itemCount: ayinGunSayisi,
                 itemBuilder: (context, index) {
                   int gun = index + 1;
                   String tarihAnahtari = "$gun $suAnkiAyAdi";
 
-                  // HER KUTU KENDİ GÜNÜNÜ DİNLİYOR (Yüzdelik Hesaplama İçin)
+                  // HER KUTU KENDİ GÜNÜNÜ DİNLİYOR
                   return StreamBuilder<QuerySnapshot>(
                     stream: _authService.gorevleriGetir(tarihAnahtari),
                     builder: (context, snapshot) {
                       double yuzde = 0.0;
+                      int toplamGorev = 0; // Yüzde yazısı için dışarı aldık
 
                       if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
                         var docs = snapshot.data!.docs;
-                        int toplam = docs.length;
+                        toplamGorev = docs.length;
                         int tamamlanan = docs
                             .where((doc) => doc["tamamlandi"] == true)
                             .length;
-                        yuzde = tamamlanan / toplam; // Oranı buluyoruz
+                        yuzde = tamamlanan / toplamGorev;
                       }
 
-                      // Bugünün kutusu mu? (Görsel vurgu için)
                       bool bugunMu = (gun == simdi.day);
 
                       return GestureDetector(
                         onTap: () => _gorevleriGoster(gun),
                         child: Container(
-                          clipBehavior:
-                              Clip.hardEdge, // Boyamanın taşmasını engeller
+                          clipBehavior: Clip.hardEdge,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              // Bugün ise kalın ve belirgin, değilse soluk kenarlık
                               color: bugunMu
                                   ? Colors.indigo
                                   : Colors.indigo.withOpacity(0.2),
@@ -286,34 +283,63 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           child: Stack(
                             children: [
-                              // 1. BOYAMA KATMANI (Aşağıdan yukarıya doğru dolar)
+                              // 1. BOYAMA KATMANI
                               Align(
                                 alignment: Alignment.bottomCenter,
                                 child: FractionallySizedBox(
                                   widthFactor: 1.0,
-                                  heightFactor: yuzde, // Yüzdeye göre yükseklik
+                                  heightFactor: yuzde,
                                   child: Container(
-                                    // Tamamı bittiyse yeşil, bitmediyse indigo
                                     color: yuzde == 1.0
-                                        ? Colors.green.withOpacity(0.4)
-                                        : Colors.indigo.withOpacity(0.2),
+                                        ? const Color.fromARGB(
+                                            255,
+                                            42,
+                                            244,
+                                            49,
+                                          ).withOpacity(0.4)
+                                        : const Color.fromARGB(
+                                            255,
+                                            255,
+                                            2,
+                                            2,
+                                          ).withOpacity(0.2),
                                   ),
                                 ),
                               ),
-                              // 2. YAZI KATMANI (Gün numarası)
+                              // 2. YAZI KATMANI (Sayı ve Yüzde)
                               Center(
-                                child: Text(
-                                  "$gun",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: bugunMu
-                                        ? FontWeight.w900
-                                        : FontWeight.bold,
-                                    // Kutu doldukça yazının rengini biraz koyulaştırıyoruz ki okunsun
-                                    color: yuzde > 0.5
-                                        ? Colors.indigo[900]
-                                        : Colors.indigo,
-                                  ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "$gun",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: bugunMu
+                                            ? FontWeight.w900
+                                            : FontWeight.bold,
+                                        color: yuzde > 0.5
+                                            ? Colors.indigo[900]
+                                            : Colors.indigo,
+                                      ),
+                                    ),
+                                    // Sadece o gün görev varsa yüzde yazısını göster
+                                    if (toplamGorev > 0)
+                                      Text(
+                                        "%${(yuzde * 100).toInt()}",
+                                        style: TextStyle(
+                                          fontSize: 11, // Şık ve küçük font
+                                          fontWeight: FontWeight.bold,
+                                          color: yuzde == 1.0
+                                              ? Colors.green[800]
+                                              : (yuzde > 0.5
+                                                    ? Colors.indigo[800]
+                                                    : Colors.indigo.withOpacity(
+                                                        0.6,
+                                                      )),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                             ],
