@@ -56,8 +56,6 @@ class AuthService {
 
   //home sayfasında görev ekleme ve silme işlemleri için iki fonksiyon daha ekleyelim
 
-  // auth_service.dart içine bu metotları ekle:
-
   // 1. Görev Ekleme: Kullanıcının ID'sini ve seçilen tarihi baz alarak kayıt yapar
   Future<void> gorevEkle(String baslik, String tarih) async {
     String uid = _auth.currentUser!.uid;
