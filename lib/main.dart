@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:task_calendar/screens/login_screen.dart';
+import 'package:task_calendar/screens/login_screen.dart'; // Kendi dosya yoluna göre kontrol et
 
-// GLOBAL DİNLEYİCİ: Tüm uygulama bu değişkeni dinleyecek
+// GLOBAL DİNLEYİCİ: Uygulama her zaman Light (Aydınlık) modda başlar!
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // 1. Uygulama açılırken telefonun hafızasına (Local Storage) bakıyoruz
-  final prefs = await SharedPreferences.getInstance();
-
-  // 2. 'isDarkMode' adında bir kayıt var mı? Yoksa varsayılan olarak false (açık) yap.
-  final bool isDark = prefs.getBool('isDarkMode') ?? false;
-
-  // 3. Dinleyiciye başlangıç değerini veriyoruz
-  themeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
+  // Artık SharedPreferences ile cihaz hafızasına bakmıyoruz (KISS Prensibi).
+  // Çıkış yapılıp tekrar girildiğinde veya uygulama ilk açıldığında
+  // tema her zaman varsayılan aydınlık mod olacaktır.
 
   runApp(const MyApp());
 }
@@ -53,14 +47,12 @@ class MyApp extends StatelessWidget {
             primaryColor: Colors.indigoAccent,
             scaffoldBackgroundColor: const Color(0xFF121212),
             appBarTheme: const AppBarTheme(
-              // Burayı değiştirdik: Koyu temada da AppBar rengi indigo olsun
               backgroundColor: Colors.indigo,
               foregroundColor: Colors.white,
             ),
           ),
 
-          home:
-              const LoginScreen(), // Uygulama açıldığında LoginScreen gösterilecek
+          home: const LoginScreen(),
         );
       },
     );
