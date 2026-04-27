@@ -1,15 +1,23 @@
-import 'package:firebase_core/firebase_core.dart'; // 1. Firebase çekirdeği
 import 'package:flutter/material.dart';
-import 'firebase_options.dart'; // 2. Otomatik oluşan ayar dosyası
-//import 'screens/register_screen.dart'; // 3. Senin oluşturduğun kayıt ekranı
-import 'screens/login_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:task_calendar/screens/login_screen.dart';
+
+// GLOBAL DİNLEYİCİ: Tüm uygulama bu değişkeni dinleyecek
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
 void main() async {
-  // Uygulama başlamadan önce Flutter bileşenlerinin hazır olduğundan emin oluyoruz
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 
-  // Firebase motorunu, oluşturduğumuz ayarlar ile ateşliyoruz
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // 1. Uygulama açılırken telefonun hafızasına (Local Storage) bakıyoruz
+  final prefs = await SharedPreferences.getInstance();
+
+  // 2. 'isDarkMode' adında bir kayıt var mı? Yoksa varsayılan olarak false (açık) yap.
+  final bool isDark = prefs.getBool('isDarkMode') ?? false;
+
+  // 3. Dinleyiciye başlangıç değerini veriyoruz
+  themeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
 
   runApp(const MyApp());
 }
@@ -19,16 +27,42 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner:
-          false, // O sağ üstteki kırmızı bandı kaldıralım
-      title: 'Takvim Görev Uygulaması',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
-      ),
-      // Uygulama açıldığında doğrudan senin defterdeki o kayıt sayfasına gitsin
-      home: const LoginScreen(),
+    // ValueListenableBuilder: themeNotifier değiştiğinde tüm uygulamayı yeniden çizer
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (_, ThemeMode currentMode, __) {
+        return MaterialApp(
+          title: 'Görev Takvimi',
+          debugShowCheckedModeBanner: false,
+
+          // Tema Modunu buraya bağlıyoruz
+          themeMode: currentMode,
+
+          // AÇIK TEMA AYARLARI
+          theme: ThemeData.light().copyWith(
+            primaryColor: Colors.indigo,
+            scaffoldBackgroundColor: Colors.grey[100],
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.indigo,
+              foregroundColor: Colors.white,
+            ),
+          ),
+
+          // KOYU TEMA AYARLARI
+          darkTheme: ThemeData.dark().copyWith(
+            primaryColor: Colors.indigoAccent,
+            scaffoldBackgroundColor: const Color(0xFF121212),
+            appBarTheme: const AppBarTheme(
+              // Burayı değiştirdik: Koyu temada da AppBar rengi indigo olsun
+              backgroundColor: Colors.indigo,
+              foregroundColor: Colors.white,
+            ),
+          ),
+
+          home:
+              const LoginScreen(), // Uygulama açıldığında LoginScreen gösterilecek
+        );
+      },
     );
   }
 }

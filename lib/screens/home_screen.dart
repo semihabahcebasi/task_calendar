@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+import '../main.dart'; // themeNotifier'a ulaşmak için (Hata verirse Ctrl+. ile düzelt)
+import 'package:shared_preferences/shared_preferences.dart'; // Hafızaya yazmak için
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _gorevleriGoster(int gunNo) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
+      isScrollControlled: true, // Klavye açılınca da genişleyebilmesi için
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
@@ -212,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      //backgroundColor: Colors.grey[100], // Tema tarafından yönetildiği için artık gerek yok
       appBar: AppBar(
         title: Text("$suAnkiAyAdi ${simdi.year}"), // Dinamik Yıl ve Ay
         centerTitle: true,
@@ -220,6 +222,33 @@ class _HomeScreenState extends State<HomeScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          // 1. TEMA DEĞİŞTİRME BUTONU
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: themeNotifier,
+            builder: (_, mode, __) {
+              return IconButton(
+                // Tema açıksa koyu mod (ay), koyuysa açık mod (güneş) ikonu göster
+                icon: Icon(
+                  mode == ThemeMode.light ? Icons.dark_mode : Icons.light_mode,
+                ),
+                onPressed: () async {
+                  // Mevcut durumun ne olduğunu bul
+                  bool isDark = mode == ThemeMode.dark;
+
+                  // Temayı anında tam tersine çevir
+                  themeNotifier.value = isDark
+                      ? ThemeMode.light
+                      : ThemeMode.dark;
+
+                  // Kullanıcının bu yeni tercihini telefonun hafızasına kaydet
+                  final prefs = await SharedPreferences.getInstance();
+                  prefs.setBool('isDarkMode', !isDark);
+                },
+              );
+            },
+          ),
+
+          // 2. ÇIKIŞ YAP BUTONU (Zaten var olan kodun)
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -249,12 +278,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   int gun = index + 1;
                   String tarihAnahtari = "$gun $suAnkiAyAdi";
 
-                  // HER KUTU KENDİ GÜNÜNÜ DİNLİYOR
+                  // EKRANIN GECE MODUNDA OLUP OLMADIĞINI ANLAYAN RADAR
+                  bool isDark = Theme.of(context).brightness == Brightness.dark;
+
                   return StreamBuilder<QuerySnapshot>(
                     stream: _authService.gorevleriGetir(tarihAnahtari),
                     builder: (context, snapshot) {
                       double yuzde = 0.0;
-                      int toplamGorev = 0; // Yüzde yazısı için dışarı aldık
+                      int toplamGorev = 0;
 
                       if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
                         var docs = snapshot.data!.docs;
@@ -272,12 +303,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Container(
                           clipBehavior: Clip.hardEdge,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
+                              // Kenarlık Rengi: Gece ve Gündüze göre dinamik
                               color: bugunMu
-                                  ? Colors.indigo
-                                  : Colors.indigo.withOpacity(0.2),
+                                  ? (isDark
+                                        ? Colors.indigoAccent
+                                        : Colors.indigo)
+                                  : (isDark
+                                        ? Colors.white24
+                                        : Colors.indigo.withOpacity(0.2)),
                               width: bugunMu ? 2.5 : 1.0,
                             ),
                           ),
@@ -290,23 +326,32 @@ class _HomeScreenState extends State<HomeScreen> {
                                   widthFactor: 1.0,
                                   heightFactor: yuzde,
                                   child: Container(
+                                    // Dolgu Rengi: Gece modunda renkleri daha parlak yapıyoruz
                                     color: yuzde == 1.0
-                                        ? const Color.fromARGB(
-                                            255,
-                                            42,
-                                            244,
-                                            49,
-                                          ).withOpacity(0.4)
-                                        : const Color.fromARGB(
-                                            255,
-                                            255,
-                                            2,
-                                            2,
-                                          ).withOpacity(0.2),
+                                        ? (isDark
+                                              ? Colors.greenAccent.withOpacity(
+                                                  0.4,
+                                                )
+                                              : const Color.fromARGB(
+                                                  255,
+                                                  42,
+                                                  244,
+                                                  49,
+                                                ).withOpacity(0.4))
+                                        : (isDark
+                                              ? Colors.redAccent.withOpacity(
+                                                  0.4,
+                                                )
+                                              : const Color.fromARGB(
+                                                  255,
+                                                  255,
+                                                  2,
+                                                  2,
+                                                ).withOpacity(0.2)),
                                   ),
                                 ),
                               ),
-                              // 2. YAZI KATMANI (Sayı ve Yüzde)
+                              // 2. YAZI KATMANI
                               Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -318,25 +363,33 @@ class _HomeScreenState extends State<HomeScreen> {
                                         fontWeight: bugunMu
                                             ? FontWeight.w900
                                             : FontWeight.bold,
-                                        color: yuzde > 0.5
-                                            ? Colors.indigo[900]
-                                            : Colors.indigo,
+                                        // Gün sayısı rengi
+                                        color: isDark
+                                            ? Colors.white
+                                            : (yuzde > 0.5
+                                                  ? Colors.indigo[900]
+                                                  : Colors.indigo),
                                       ),
                                     ),
-                                    // Sadece o gün görev varsa yüzde yazısını göster
                                     if (toplamGorev > 0)
                                       Text(
                                         "%${(yuzde * 100).toInt()}",
                                         style: TextStyle(
-                                          fontSize: 11, // Şık ve küçük font
+                                          fontSize: 11,
                                           fontWeight: FontWeight.bold,
-                                          color: yuzde == 1.0
-                                              ? Colors.green[800]
-                                              : (yuzde > 0.5
-                                                    ? Colors.indigo[800]
-                                                    : Colors.indigo.withOpacity(
-                                                        0.6,
-                                                      )),
+                                          // Yüzdelik yazı rengi
+                                          color: isDark
+                                              ? (yuzde == 1.0
+                                                    ? Colors.greenAccent
+                                                    : Colors.white70)
+                                              : (yuzde == 1.0
+                                                    ? Colors.green[800]
+                                                    : (yuzde > 0.5
+                                                          ? Colors.indigo[800]
+                                                          : Colors.indigo
+                                                                .withOpacity(
+                                                                  0.6,
+                                                                ))),
                                         ),
                                       ),
                                   ],
