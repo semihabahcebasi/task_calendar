@@ -21,15 +21,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Yeni Hesap Oluştur")),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0, // Gölgeyi kaldırır
+        iconTheme: const IconThemeData(
+          color: Colors.black87,
+        ), // Geri butonunu belirginleştirir
+      ),
+
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: SingleChildScrollView(
           // Klavye açılınca ekran taşmasın diye
           child: Column(
             children: [
-              const Icon(Icons.person_add, size: 80, color: Colors.indigo),
-              const SizedBox(height: 20),
+              Text(
+                "Kayıt Ol",
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: const Color.fromARGB(255, 138, 52, 96),
+                ),
+              ),
+
+              const SizedBox(height: 30),
 
               // Ad Kutucuğu
               TextField(
@@ -106,7 +121,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                   child: const Text(
                     "Kaydı Tamamla",
-                    style: TextStyle(fontSize: 18),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Color.fromARGB(255, 52, 138, 118),
+                    ),
                   ),
                 ),
               ),

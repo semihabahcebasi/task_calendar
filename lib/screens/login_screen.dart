@@ -19,13 +19,26 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Giriş Yap")),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0, // Gölgeyi kaldırır
+        iconTheme: const IconThemeData(
+          color: Colors.black87,
+        ), // Geri butonunu belirginleştirir
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_outline, size: 80, color: Colors.indigo),
+            Text(
+              "Giriş Yap",
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: const Color.fromARGB(255, 138, 52, 96),
+              ),
+            ),
             const SizedBox(height: 30),
             TextField(
               controller: _emailController,
@@ -77,7 +90,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     ).showSnackBar(SnackBar(content: Text("Hata: $sonuc")));
                   }
                 },
-                child: const Text("Giriş Yap"),
+                child: const Text(
+                  "Giriş Yap",
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Color.fromARGB(255, 52, 138, 118),
+                  ),
+                ),
               ),
             ),
 
@@ -91,7 +110,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 );
               },
-              child: const Text("Hesabınız yok mu? Kayıt Olun"),
+              child: const Text(
+                "Hesabınız yok mu? Kayıt Olun",
+                style: TextStyle(color: Color.fromARGB(255, 27, 58, 51)),
+              ),
             ),
           ],
         ),
