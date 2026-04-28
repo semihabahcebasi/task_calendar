@@ -104,4 +104,16 @@ class AuthService {
       print("Çıkış hatası: $e");
     }
   }
+
+  Future<String?> kullaniciAdiniGetir() async {
+    final user = _auth.currentUser; // instance yerine mevcut _auth'u kullan
+    if (user == null) return null;
+
+    final doc = await _firestore
+        .collection('Users') // ← büyük U, kayıt ile aynı
+        .doc(user.uid)
+        .get();
+
+    return doc.data()?['ad'] as String?;
+  }
 }

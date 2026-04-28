@@ -14,6 +14,26 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
 
+  // --- KULLANICI ADI ---
+  String? _kullaniciAdi;
+
+  @override
+  void initState() {
+    super.initState();
+    _kullaniciAdiniGetir();
+  }
+
+  Future<void> _kullaniciAdiniGetir() async {
+    try {
+      final ad = await _authService.kullaniciAdiniGetir();
+      if (mounted) {
+        setState(() {
+          _kullaniciAdi = ad;
+        });
+      }
+    } catch (_) {}
+  }
+
   // --- ZAMAN VE TARİH YÖNETİMİ ---
   // BUG #2 FIX: Computed getter — uygulama açık kalsa bile her zaman doğru günü döndürür
   DateTime get simdi => DateTime.now();
@@ -67,7 +87,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  // BUG #3 FIX: Sabit indigo yerine tema rengi
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
@@ -126,7 +145,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               decoration: veri["tamamlandi"]
                                   ? TextDecoration.lineThrough
                                   : TextDecoration.none,
-                              // BUG #2 FIX: Colors.black yerine tema rengi — dark modda görünür olur
                               color: veri["tamamlandi"]
                                   ? Colors.grey
                                   : Theme.of(context).colorScheme.onSurface,
@@ -209,9 +227,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("$suAnkiAyAdi ${simdi.year}"),
+        // AppBar'da artık sadece hoşgeldin mesajı var
+        title: _kullaniciAdi == null
+            ? const Text("Hoş geldin!")
+            : Text("Hoş geldin, $_kullaniciAdi!"),
         centerTitle: true,
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color.fromARGB(255, 138, 52, 96),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -249,6 +270,37 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
+            // --- AY / YIL BAŞLIĞI (AppBar'dan buraya taşındı) ---
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: ValueListenableBuilder<ThemeMode>(
+                valueListenable: themeNotifier,
+                builder: (_, mode, __) {
+                  final bool isDark = mode == ThemeMode.dark;
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        size: 20,
+                        color: isDark ? Colors.white70 : Colors.indigo[700],
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "$suAnkiAyAdi ${simdi.year}",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : Colors.indigo[900],
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+
             Expanded(
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -299,7 +351,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                             : Colors.indigo)
                                       : (isDark
                                             ? Colors.white30
-                                            // WARNING FIX: withOpacity → withValues
                                             : Colors.indigo.withValues(
                                                 alpha: 0.2,
                                               )),
@@ -316,7 +367,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                       child: Container(
                                         color: yuzde == 1.0
                                             ? (isDark
-                                                  // WARNING FIX: withOpacity → withValues
                                                   ? Colors.greenAccent
                                                         .withValues(alpha: 0.4)
                                                   : Colors.green.withValues(
