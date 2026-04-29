@@ -16,6 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // --- KULLANICI ADI ---
   String? _kullaniciAdi;
+  String _avatarId = 'avatar_1';
 
   @override
   void initState() {
@@ -26,9 +27,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _kullaniciAdiniGetir() async {
     try {
       final ad = await _authService.kullaniciAdiniGetir();
+      final avatarId = await _authService.avatarIdGetir();
       if (mounted) {
         setState(() {
           _kullaniciAdi = ad;
+          _avatarId = avatarId ?? 'avatar_1';
         });
       }
     } catch (_) {}
@@ -228,9 +231,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         // AppBar'da artık sadece hoşgeldin mesajı var
-        title: _kullaniciAdi == null
-            ? const Text("Hoş geldin!")
-            : Text("Hoş geldin, $_kullaniciAdi!"),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundImage: AssetImage('assets/avatars/$_avatarId.png'),
+            ),
+            const SizedBox(width: 8),
+            _kullaniciAdi == null
+                ? const Text("Hoş geldin!")
+                : Text("Hoş geldin, $_kullaniciAdi!"),
+          ],
+        ),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 138, 52, 96),
         foregroundColor: Colors.white,

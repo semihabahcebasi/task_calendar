@@ -19,6 +19,8 @@ class AuthService {
     String password,
     String ad,
     String soyad,
+    String
+    avatarId, // avatarId parametresi ekledik, böylece kullanıcı kaydolurken avatar seçebilir
   ) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
@@ -37,6 +39,7 @@ class AuthService {
         "ad": ad,
         "soyad": soyad,
         "email": email,
+        'avatarId': avatarId,
       });
       return "Başarılı";
     } catch (e) {
@@ -115,5 +118,15 @@ class AuthService {
         .get();
 
     return doc.data()?['ad'] as String?;
+  }
+
+  Future<String?> avatarIdGetir() async {
+    try {
+      final uid = _auth.currentUser!.uid;
+      final doc = await _firestore.collection('Users').doc(uid).get();
+      return doc.data()?['avatarId'];
+    } catch (e) {
+      return null;
+    }
   }
 }

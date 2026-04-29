@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../widgets/avatar_picker.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -17,6 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // 2. Servisimize ulaşmak için bir nesne
   final AuthService _authService = AuthService();
+  String _secilenAvatar = 'avatar_1'; // Varsayılan avatar
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +88,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 30),
+
+              const SizedBox(height: 16),
+              const Text(
+                'Profil resmi seç',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 12),
+              AvatarPicker(
+                secilenAvatar: _secilenAvatar,
+                onAvatarSec: (avatar) {
+                  setState(() {
+                    _secilenAvatar = avatar;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
 
               // KAYIT BUTONU
               SizedBox(
@@ -95,11 +112,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: ElevatedButton(
                   onPressed: () async {
                     // Butona basıldığında servisteki fonksiyonu çağırıyoruz
+                    print("Seçilen avatar: $_secilenAvatar");
                     String? sonuc = await _authService.kayitOl(
                       _emailController.text,
                       _sifreController.text,
                       _adController.text,
                       _soyadController.text,
+                      _secilenAvatar,
                     );
 
                     if (sonuc == "Başarılı") {
