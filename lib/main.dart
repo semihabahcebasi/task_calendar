@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:task_calendar/screens/login_screen.dart'; // Kendi dosya yoluna göre kontrol et
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:task_calendar/screens/home_screen.dart';
 
 // GLOBAL DİNLEYİCİ: Uygulama her zaman Light (Aydınlık) modda başlar!
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
@@ -52,7 +54,24 @@ class MyApp extends StatelessWidget {
             ),
           ),
 
-          home: const LoginScreen(),
+          // home: const LoginScreen(), // BU SATIRI SİLİP AŞAĞIDAKİNİ EKLİYORUZ
+          home: StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, snapshot) {
+              // Eğer Firebase ile bağlantı kurulurken bekleniyorsa, dönen bir çember göster
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              // Eğer snapshot içinde data varsa (yani kullanıcı önceden giriş yapmışsa)
+              if (snapshot.hasData) {
+                return const HomeScreen();
+              }
+              // Eğer kullanıcı giriş yapmamışsa veya kendi isteğiyle çıkış yapmışsa
+              return const LoginScreen();
+            },
+          ),
         );
       },
     );

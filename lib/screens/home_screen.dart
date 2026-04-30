@@ -38,10 +38,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // --- ZAMAN VE TARİH YÖNETİMİ ---
-  // BUG #2 FIX: Computed getter — uygulama açık kalsa bile her zaman doğru günü döndürür
-  DateTime get simdi => DateTime.now();
+  DateTime _gosterilenTarih = DateTime.now(); // Ekranda görünen ay/yıl
+  final DateTime _bugun = DateTime.now(); // Gerçek bugünü referans almak için
 
-  int get ayinGunSayisi => DateUtils.getDaysInMonth(simdi.year, simdi.month);
+  int get ayinGunSayisi =>
+      DateUtils.getDaysInMonth(_gosterilenTarih.year, _gosterilenTarih.month);
 
   final List<String> aylar = [
     "Ocak",
@@ -58,12 +59,37 @@ class _HomeScreenState extends State<HomeScreen> {
     "Aralık",
   ];
 
-  String get suAnkiAyAdi => aylar[simdi.month - 1];
+  String get gosterilenAyAdi => aylar[_gosterilenTarih.month - 1];
 
   bool gecmisGunMu(int gun) {
-    DateTime secilenGun = DateTime(simdi.year, simdi.month, gun);
-    DateTime bugun = DateTime(simdi.year, simdi.month, simdi.day);
+    DateTime secilenGun = DateTime(
+      _gosterilenTarih.year,
+      _gosterilenTarih.month,
+      gun,
+    );
+    DateTime bugun = DateTime(_bugun.year, _bugun.month, _bugun.day);
     return secilenGun.isBefore(bugun);
+  }
+
+  // Ay değiştirme fonksiyonları
+  void _oncekiAy() {
+    setState(() {
+      _gosterilenTarih = DateTime(
+        _gosterilenTarih.year,
+        _gosterilenTarih.month - 1,
+        1,
+      );
+    });
+  }
+
+  void _sonrakiAy() {
+    setState(() {
+      _gosterilenTarih = DateTime(
+        _gosterilenTarih.year,
+        _gosterilenTarih.month + 1,
+        1,
+      );
+    });
   }
 
   // --- ALT PANEL (Görevleri Gösterme) ---
@@ -86,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                "$gunNo $suAnkiAyAdi Görevleri",
+                "$gunNo $gosterilenAyAdi Görevleri",
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -97,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const Divider(),
 
               StreamBuilder<QuerySnapshot>(
-                stream: _authService.gorevleriGetir("$gunNo $suAnkiAyAdi"),
+                stream: _authService.gorevleriGetir("$gunNo $gosterilenAyAdi"),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(
@@ -199,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 if (_gorevController.text.isNotEmpty) {
                                   await _authService.gorevEkle(
                                     _gorevController.text,
-                                    "$gunNo $suAnkiAyAdi",
+                                    "$gunNo $gosterilenAyAdi",
                                   );
                                   Navigator.pop(context);
                                 }
@@ -284,6 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             // --- AY / YIL BAŞLIĞI (AppBar'dan buraya taşındı) ---
+            // --- AY / YIL BAŞLIĞI ---
             Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
               child: ValueListenableBuilder<ThemeMode>(
@@ -293,6 +320,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // Sol Ok (Önceki Ay)
+                      IconButton(
+                        icon: Icon(
+                          Icons.chevron_left,
+                          size: 30,
+                          color: isDark ? Colors.white70 : Colors.indigo[700],
+                        ),
+                        onPressed: _oncekiAy,
+                      ),
+
                       Icon(
                         Icons.calendar_month_rounded,
                         size: 20,
@@ -300,13 +337,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "$suAnkiAyAdi ${simdi.year}",
+                        "$gosterilenAyAdi ${_gosterilenTarih.year}",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: isDark ? Colors.white : Colors.indigo[900],
                           letterSpacing: 0.5,
                         ),
+                      ),
+
+                      // Sağ Ok (Sonraki Ay)
+                      IconButton(
+                        icon: Icon(
+                          Icons.chevron_right,
+                          size: 30,
+                          color: isDark ? Colors.white70 : Colors.indigo[700],
+                        ),
+                        onPressed: _sonrakiAy,
                       ),
                     ],
                   );
@@ -324,8 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemCount: ayinGunSayisi,
                 itemBuilder: (context, index) {
                   int gun = index + 1;
-                  String tarihAnahtari = "$gun $suAnkiAyAdi";
-
+                  String tarihAnahtari = "$gun $gosterilenAyAdi";
                   // BUG #1 FIX: ValueListenableBuilder ile sarıldı — tema değişince grid hücreleri yeniden inşa edilir
                   return ValueListenableBuilder<ThemeMode>(
                     valueListenable: themeNotifier,
@@ -348,8 +394,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             yuzde = tamamlanan / toplamGorev;
                           }
 
-                          bool bugunMu = (gun == simdi.day);
-
+                          bool bugunMu =
+                              (gun == _bugun.day &&
+                              _gosterilenTarih.month == _bugun.month &&
+                              _gosterilenTarih.year == _bugun.year);
                           return GestureDetector(
                             onTap: () => _gorevleriGoster(gun),
                             child: Container(
