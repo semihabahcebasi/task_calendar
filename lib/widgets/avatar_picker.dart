@@ -7,6 +7,14 @@ const List<String> avatarListesi = [
   'avatar_4',
   'avatar_5',
   'avatar_6',
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
 ];
 
 class AvatarPicker extends StatefulWidget {
