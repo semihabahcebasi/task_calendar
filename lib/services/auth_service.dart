@@ -129,4 +129,44 @@ class AuthService {
       return null;
     }
   }
+
+  Future<String?> avatarGuncelle(String yeniAvatarId) async {
+    try {
+      final uid = _auth.currentUser!.uid;
+      await _firestore.collection('Users').doc(uid).update({
+        'avatarId': yeniAvatarId,
+      });
+      return "Başarılı";
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  // tema güncelleme fonksiyonu: kullanıcı temayı seçtikten sonra bu
+  // fonksiyonla Firestore'daki verileri güncelleriz
+
+  Future<void> temaGuncelle(String kategori, String temaId) async {
+    try {
+      final uid = _auth.currentUser!.uid;
+      await _firestore.collection('Users').doc(uid).update({
+        'temaKategori': kategori.isEmpty ? null : kategori,
+        'temaId': temaId.isEmpty ? null : temaId,
+      });
+    } catch (e) {
+      print("Tema güncelleme hatası: $e");
+    }
+  }
+
+  Future<Map<String, String?>> temaGetir() async {
+    try {
+      final uid = _auth.currentUser!.uid;
+      final doc = await _firestore.collection('Users').doc(uid).get();
+      return {
+        'temaKategori': doc.data()?['temaKategori'],
+        'temaId': doc.data()?['temaId'],
+      };
+    } catch (e) {
+      return {'temaKategori': null, 'temaId': null};
+    }
+  }
 }

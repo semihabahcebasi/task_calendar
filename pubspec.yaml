@@ -68,6 +68,8 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - assets/avatars/
+    - assets/temalar/anime/
+    - assets/temalar/soft/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

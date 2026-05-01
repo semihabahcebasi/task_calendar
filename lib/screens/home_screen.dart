@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import '../main.dart';
+import '../widgets/avatar_picker.dart';
+import '../widgets/tema_picker.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,23 +20,123 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _kullaniciAdi;
   String _avatarId = 'avatar_1';
 
+  String? _temaKategori;
+  String? _temaId;
+
   @override
   void initState() {
     super.initState();
     _kullaniciAdiniGetir();
   }
 
+  // KULLANICI ADI GETİRME
   Future<void> _kullaniciAdiniGetir() async {
     try {
       final ad = await _authService.kullaniciAdiniGetir();
       final avatarId = await _authService.avatarIdGetir();
+      final tema = await _authService.temaGetir();
       if (mounted) {
         setState(() {
           _kullaniciAdi = ad;
           _avatarId = avatarId ?? 'avatar_1';
+          _temaKategori =
+              (tema['temaKategori'] == null || tema['temaKategori']!.isEmpty)
+              ? null
+              : tema['temaKategori'];
+          _temaId = (tema['temaId'] == null || tema['temaId']!.isEmpty)
+              ? null
+              : tema['temaId'];
         });
       }
     } catch (_) {}
+  }
+
+  // AVATAR DEĞİŞTİRME
+  void _avatarDegistir() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Profil resmini değiştir',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              AvatarPicker(
+                secilenAvatar: _avatarId,
+                onAvatarSec: (yeniAvatar) async {
+                  await _authService.avatarGuncelle(yeniAvatar);
+                  setState(() {
+                    _avatarId = yeniAvatar;
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // --- TEMA DEĞİŞTİRME ---
+  void _temaDegistir() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Tema seç',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TemaPicker(
+                secilenKategori: _temaKategori,
+                secilenTema: _temaId,
+                onTemaSec: (kategori, temaId) async {
+                  await _authService.temaGuncelle(kategori, temaId);
+                  setState(() {
+                    _temaKategori = kategori;
+                    _temaId = temaId;
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: () async {
+                  await _authService.temaGuncelle('', '');
+                  setState(() {
+                    _temaKategori = null;
+                    _temaId = null;
+                  });
+                  Navigator.pop(context);
+                },
+                icon: const Icon(Icons.close, color: Colors.red),
+                label: const Text(
+                  'Temayı kaldır',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   // --- ZAMAN VE TARİH YÖNETİMİ ---
@@ -258,23 +360,35 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         // AppBar'da artık sadece hoşgeldin mesajı var
         title: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundImage: AssetImage('assets/avatars/$_avatarId.png'),
+            GestureDetector(
+              onTap: () => _avatarDegistir(),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundImage: AssetImage('assets/avatars/$_avatarId.png'),
+              ),
             ),
             const SizedBox(width: 8),
-            _kullaniciAdi == null
-                ? const Text("Hoş geldin!")
-                : Text("Hoş geldin, $_kullaniciAdi!"),
+            Flexible(
+              child: Text(
+                _kullaniciAdi == null
+                    ? "Hoş geldin!"
+                    : "Selam, $_kullaniciAdi!",
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
-        centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 138, 52, 96),
-        foregroundColor: Colors.white,
+        centerTitle: false,
+        backgroundColor: const Color.fromARGB(255, 127, 149, 147),
+        foregroundColor: const Color.fromARGB(255, 0, 0, 0),
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.wallpaper),
+            onPressed: () => _temaDegistir(),
+          ),
           ValueListenableBuilder<ThemeMode>(
             valueListenable: themeNotifier,
             builder: (_, mode, __) {
@@ -305,191 +419,235 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            // --- AY / YIL BAŞLIĞI (AppBar'dan buraya taşındı) ---
-            // --- AY / YIL BAŞLIĞI ---
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: ValueListenableBuilder<ThemeMode>(
-                valueListenable: themeNotifier,
-                builder: (_, mode, __) {
-                  final bool isDark = mode == ThemeMode.dark;
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Sol Ok (Önceki Ay)
-                      IconButton(
-                        icon: Icon(
-                          Icons.chevron_left,
-                          size: 30,
-                          color: isDark ? Colors.white70 : Colors.indigo[700],
-                        ),
-                        onPressed: _oncekiAy,
-                      ),
-
-                      Icon(
-                        Icons.calendar_month_rounded,
-                        size: 20,
-                        color: isDark ? Colors.white70 : Colors.indigo[700],
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        "$gosterilenAyAdi ${_gosterilenTarih.year}",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : Colors.indigo[900],
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-
-                      // Sağ Ok (Sonraki Ay)
-                      IconButton(
-                        icon: Icon(
-                          Icons.chevron_right,
-                          size: 30,
-                          color: isDark ? Colors.white70 : Colors.indigo[700],
-                        ),
-                        onPressed: _sonrakiAy,
-                      ),
-                    ],
-                  );
-                },
+      body: Stack(
+        children: [
+          // Arka plan görseli
+          if (_temaKategori != null && _temaId != null)
+            Positioned.fill(
+              child: Image.asset(
+                'assets/temalar/$_temaKategori/$_temaId.png',
+                fit: BoxFit.cover,
               ),
             ),
-
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                ),
-                itemCount: ayinGunSayisi,
-                itemBuilder: (context, index) {
-                  int gun = index + 1;
-                  String tarihAnahtari = "$gun $gosterilenAyAdi";
-                  // BUG #1 FIX: ValueListenableBuilder ile sarıldı — tema değişince grid hücreleri yeniden inşa edilir
-                  return ValueListenableBuilder<ThemeMode>(
+          // Şeffaf katman
+          if (_temaKategori != null && _temaId != null)
+            Positioned.fill(
+              child: Container(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black.withOpacity(0.5)
+                    : Colors.white.withOpacity(0.5),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              children: [
+                // --- AY / YIL BAŞLIĞI (AppBar'dan buraya taşındı) ---
+                // --- AY / YIL BAŞLIĞI ---
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: ValueListenableBuilder<ThemeMode>(
                     valueListenable: themeNotifier,
                     builder: (_, mode, __) {
-                      bool isDark = mode == ThemeMode.dark;
-
-                      return StreamBuilder<QuerySnapshot>(
-                        stream: _authService.gorevleriGetir(tarihAnahtari),
-                        builder: (context, snapshot) {
-                          double yuzde = 0.0;
-                          int toplamGorev = 0;
-
-                          if (snapshot.hasData &&
-                              snapshot.data!.docs.isNotEmpty) {
-                            var docs = snapshot.data!.docs;
-                            toplamGorev = docs.length;
-                            int tamamlanan = docs
-                                .where((doc) => doc["tamamlandi"] == true)
-                                .length;
-                            yuzde = tamamlanan / toplamGorev;
-                          }
-
-                          bool bugunMu =
-                              (gun == _bugun.day &&
-                              _gosterilenTarih.month == _bugun.month &&
-                              _gosterilenTarih.year == _bugun.year);
-                          return GestureDetector(
-                            onTap: () => _gorevleriGoster(gun),
-                            child: Container(
-                              clipBehavior: Clip.hardEdge,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: bugunMu
-                                      ? (isDark
-                                            ? Colors.indigoAccent
-                                            : Colors.indigo)
-                                      : (isDark
-                                            ? Colors.white30
-                                            : Colors.indigo.withValues(
-                                                alpha: 0.2,
-                                              )),
-                                  width: bugunMu ? 2.5 : 1.0,
-                                ),
+                      final bool isDark = mode == ThemeMode.dark;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Sol Ok (Önceki Ay)
+                            IconButton(
+                              icon: Icon(
+                                Icons.chevron_left,
+                                size: 30,
+                                color: isDark
+                                    ? Colors.white70
+                                    : Colors.indigo[700],
                               ),
-                              child: Stack(
-                                children: [
-                                  Align(
-                                    alignment: Alignment.bottomCenter,
-                                    child: FractionallySizedBox(
-                                      widthFactor: 1.0,
-                                      heightFactor: yuzde,
-                                      child: Container(
-                                        color: yuzde == 1.0
-                                            ? (isDark
-                                                  ? Colors.greenAccent
-                                                        .withValues(alpha: 0.4)
-                                                  : Colors.green.withValues(
-                                                      alpha: 0.4,
-                                                    ))
-                                            : (isDark
-                                                  ? Colors.pinkAccent
-                                                        .withValues(alpha: 0.4)
-                                                  : Colors.pink.withValues(
-                                                      alpha: 0.2,
-                                                    )),
-                                      ),
-                                    ),
-                                  ),
-                                  Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          "$gun",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: bugunMu
-                                                ? FontWeight.w900
-                                                : FontWeight.bold,
-                                            color: isDark
-                                                ? Colors.white
-                                                : Colors.indigo[900],
-                                          ),
-                                        ),
-                                        if (toplamGorev > 0)
-                                          Text(
-                                            "%${(yuzde * 100).toInt()}",
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold,
-                                              color: yuzde == 1.0
-                                                  ? (isDark
-                                                        ? Colors.greenAccent
-                                                        : Colors.green[800])
-                                                  : (isDark
-                                                        ? Colors.pinkAccent
-                                                        : Colors.pink[800]),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                              onPressed: _oncekiAy,
+                            ),
+
+                            Icon(
+                              Icons.calendar_month_rounded,
+                              size: 20,
+                              color: isDark
+                                  ? Colors.white70
+                                  : Colors.indigo[700],
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              "$gosterilenAyAdi ${_gosterilenTarih.year}",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? Colors.white
+                                    : Colors.indigo[900],
+                                letterSpacing: 0.5,
                               ),
                             ),
+
+                            // Sağ Ok (Sonraki Ay)
+                            IconButton(
+                              icon: Icon(
+                                Icons.chevron_right,
+                                size: 30,
+                                color: isDark
+                                    ? Colors.white70
+                                    : Colors.indigo[700],
+                              ),
+                              onPressed: _sonrakiAy,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                Expanded(
+                  child: GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 7,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                        ),
+                    itemCount: ayinGunSayisi,
+                    itemBuilder: (context, index) {
+                      int gun = index + 1;
+                      String tarihAnahtari = "$gun $gosterilenAyAdi";
+                      // BUG #1 FIX: ValueListenableBuilder ile sarıldı — tema değişince grid hücreleri yeniden inşa edilir
+                      return ValueListenableBuilder<ThemeMode>(
+                        valueListenable: themeNotifier,
+                        builder: (_, mode, __) {
+                          bool isDark = mode == ThemeMode.dark;
+
+                          return StreamBuilder<QuerySnapshot>(
+                            stream: _authService.gorevleriGetir(tarihAnahtari),
+                            builder: (context, snapshot) {
+                              double yuzde = 0.0;
+                              int toplamGorev = 0;
+
+                              if (snapshot.hasData &&
+                                  snapshot.data!.docs.isNotEmpty) {
+                                var docs = snapshot.data!.docs;
+                                toplamGorev = docs.length;
+                                int tamamlanan = docs
+                                    .where((doc) => doc["tamamlandi"] == true)
+                                    .length;
+                                yuzde = tamamlanan / toplamGorev;
+                              }
+
+                              bool bugunMu =
+                                  (gun == _bugun.day &&
+                                  _gosterilenTarih.month == _bugun.month &&
+                                  _gosterilenTarih.year == _bugun.year);
+                              return GestureDetector(
+                                onTap: () => _gorevleriGoster(gun),
+                                child: Container(
+                                  clipBehavior: Clip.hardEdge,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).cardColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: bugunMu
+                                          ? (isDark
+                                                ? Colors.indigoAccent
+                                                : Colors.indigo)
+                                          : (isDark
+                                                ? Colors.white30
+                                                : Colors.indigo.withValues(
+                                                    alpha: 0.2,
+                                                  )),
+                                      width: bugunMu ? 2.5 : 1.0,
+                                    ),
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      Align(
+                                        alignment: Alignment.bottomCenter,
+                                        child: FractionallySizedBox(
+                                          widthFactor: 1.0,
+                                          heightFactor: yuzde,
+                                          child: Container(
+                                            color: yuzde == 1.0
+                                                ? (isDark
+                                                      ? Colors.greenAccent
+                                                            .withValues(
+                                                              alpha: 0.4,
+                                                            )
+                                                      : Colors.green.withValues(
+                                                          alpha: 0.4,
+                                                        ))
+                                                : (isDark
+                                                      ? Colors.pinkAccent
+                                                            .withValues(
+                                                              alpha: 0.4,
+                                                            )
+                                                      : Colors.pink.withValues(
+                                                          alpha: 0.2,
+                                                        )),
+                                          ),
+                                        ),
+                                      ),
+                                      Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              "$gun",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: bugunMu
+                                                    ? FontWeight.w900
+                                                    : FontWeight.bold,
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : Colors.indigo[900],
+                                              ),
+                                            ),
+                                            if (toplamGorev > 0)
+                                              Text(
+                                                "%${(yuzde * 100).toInt()}",
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: yuzde == 1.0
+                                                      ? (isDark
+                                                            ? Colors.greenAccent
+                                                            : Colors.green[800])
+                                                      : (isDark
+                                                            ? Colors.pinkAccent
+                                                            : Colors.pink[800]),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         },
                       );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
