@@ -60,16 +60,16 @@ class AuthService {
   //home sayfasında görev ekleme ve silme işlemleri için iki fonksiyon daha ekleyelim
 
   // 1. Görev Ekleme: Kullanıcının ID'sini ve seçilen tarihi baz alarak kayıt yapar
-  Future<void> gorevEkle(String baslik, String tarih) async {
+  Future<void> gorevEkle(String baslik, String tarih, String zorluk) async {
     String uid = _auth.currentUser!.uid;
 
     await _firestore.collection("Tasks").add({
       "userId": uid,
       "baslik": baslik,
       "tarih": tarih,
+      "zorluk": zorluk,
       "tamamlandi": false,
-      "olusturmaTarihi":
-          FieldValue.serverTimestamp(), // Görevleri sıraya koymak için
+      "olusturmaTarihi": FieldValue.serverTimestamp(),
     });
   }
 
@@ -168,5 +168,70 @@ class AuthService {
     } catch (e) {
       return {'temaKategori': null, 'temaId': null};
     }
+  }
+
+  // HAFTALIK PUAN GETİRME FONKSİYONU: Kullanıcının haftalık performansını göstermek için
+  Future<Map<String, int>> haftalikPuanGetir() async {
+    String uid = _auth.currentUser!.uid;
+
+    final simdi = DateTime.now();
+    final haftaninIlkGunu = simdi.subtract(Duration(days: simdi.weekday - 1));
+
+    Map<String, int> gunlukPuanlar = {
+      'Pzt': 0,
+      'Sal': 0,
+      'Çar': 0,
+      'Per': 0,
+      'Cum': 0,
+      'Cmt': 0,
+      'Paz': 0,
+    };
+
+    final List<String> gunIsimleri = [
+      'Pzt',
+      'Sal',
+      'Çar',
+      'Per',
+      'Cum',
+      'Cmt',
+      'Paz',
+    ];
+
+    final Map<String, int> zorlukPuanlari = {'kolay': 1, 'orta': 3, 'zor': 5};
+
+    for (int i = 0; i < 7; i++) {
+      final gun = haftaninIlkGunu.add(Duration(days: i));
+      final aylar = [
+        "Ocak",
+        "Şubat",
+        "Mart",
+        "Nisan",
+        "Mayıs",
+        "Haziran",
+        "Temmuz",
+        "Ağustos",
+        "Eylül",
+        "Ekim",
+        "Kasım",
+        "Aralık",
+      ];
+      final tarihAnahtari = "${gun.day} ${aylar[gun.month - 1]}";
+
+      final snapshot = await _firestore
+          .collection("Tasks")
+          .where("userId", isEqualTo: uid)
+          .where("tarih", isEqualTo: tarihAnahtari)
+          .where("tamamlandi", isEqualTo: true)
+          .get();
+
+      int gunPuani = 0;
+      for (var doc in snapshot.docs) {
+        final zorluk = doc.data()['zorluk'] ?? 'kolay';
+        gunPuani += zorlukPuanlari[zorluk] ?? 1;
+      }
+      gunlukPuanlar[gunIsimleri[i]] = gunPuani;
+    }
+
+    return gunlukPuanlar;
   }
 }

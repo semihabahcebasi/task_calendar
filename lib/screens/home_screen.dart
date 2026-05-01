@@ -194,6 +194,36 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Widget _zorlukButonu(
+    String zorluk,
+    String puan,
+    Color renk,
+    String secilen,
+    StateSetter setStateDialog,
+    Function(String) onSec,
+  ) {
+    final aktif = zorluk == secilen;
+    return GestureDetector(
+      onTap: () => setStateDialog(() => onSec(zorluk)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+        decoration: BoxDecoration(
+          color: aktif ? renk : renk.withOpacity(0.10),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: renk),
+        ),
+        child: Text(
+          '${zorluk[0].toUpperCase()}${zorluk.substring(1)} $puan',
+          style: TextStyle(
+            color: aktif ? Colors.white : renk,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+
   // --- ALT PANEL (Görevleri Gösterme) ---
   void _gorevleriGoster(int gunNo) {
     showModalBottomSheet(
@@ -308,34 +338,79 @@ class _HomeScreenState extends State<HomeScreen> {
                           TextEditingController();
                       showDialog(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text("Yeni Görev"),
-                          content: TextField(
-                            controller: _gorevController,
-                            autofocus: true,
-                            decoration: const InputDecoration(
-                              hintText: "Görev başlığını yazın",
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text("İptal"),
-                            ),
-                            ElevatedButton(
-                              onPressed: () async {
-                                if (_gorevController.text.isNotEmpty) {
-                                  await _authService.gorevEkle(
-                                    _gorevController.text,
-                                    "$gunNo $gosterilenAyAdi",
-                                  );
-                                  Navigator.pop(context);
-                                }
-                              },
-                              child: const Text("Ekle"),
-                            ),
-                          ],
-                        ),
+                        builder: (context) {
+                          String secilenZorluk = 'kolay';
+                          return StatefulBuilder(
+                            builder: (context, setStateDialog) {
+                              return AlertDialog(
+                                title: const Text("Yeni Görev"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        _zorlukButonu(
+                                          'kolay',
+                                          '+1',
+                                          Colors.green,
+                                          secilenZorluk,
+                                          setStateDialog,
+                                          (v) => secilenZorluk = v,
+                                        ),
+                                        _zorlukButonu(
+                                          'orta',
+                                          '+3',
+                                          Colors.orange,
+                                          secilenZorluk,
+                                          setStateDialog,
+                                          (v) => secilenZorluk = v,
+                                        ),
+                                        _zorlukButonu(
+                                          'zor',
+                                          '+5',
+                                          Colors.red,
+                                          secilenZorluk,
+                                          setStateDialog,
+                                          (v) => secilenZorluk = v,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    //const SizedBox(height: 8),
+                                    TextField(
+                                      controller: _gorevController,
+                                      autofocus: true,
+                                      decoration: const InputDecoration(
+                                        hintText: "Görev başlığını yazın",
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text("İptal"),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      if (_gorevController.text.isNotEmpty) {
+                                        await _authService.gorevEkle(
+                                          _gorevController.text,
+                                          "$gunNo $gosterilenAyAdi",
+                                          secilenZorluk,
+                                        );
+                                        Navigator.pop(context);
+                                      }
+                                    },
+                                    child: const Text("Ekle"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
                       );
                     },
                     icon: const Icon(Icons.add),

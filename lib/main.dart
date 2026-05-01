@@ -3,6 +3,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:task_calendar/screens/login_screen.dart'; // Kendi dosya yoluna göre kontrol et
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:task_calendar/screens/home_screen.dart';
+import 'package:task_calendar/screens/analysis_screen.dart';
+import 'package:task_calendar/screens/profile_screen.dart';
 
 // GLOBAL DİNLEYİCİ: Uygulama her zaman Light (Aydınlık) modda başlar!
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
@@ -66,7 +68,7 @@ class MyApp extends StatelessWidget {
               }
               // Eğer snapshot içinde data varsa (yani kullanıcı önceden giriş yapmışsa)
               if (snapshot.hasData) {
-                return const HomeScreen();
+                return const MainScreen(); // ← HomeScreen yerine
               }
               // Eğer kullanıcı giriş yapmamışsa veya kendi isteğiyle çıkış yapmışsa
               return const LoginScreen();
@@ -74,6 +76,44 @@ class MyApp extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _secilenIndex = 0;
+
+  final List<Widget> _sayfalar = [
+    const HomeScreen(),
+    const AnalizScreen(),
+    const ProfilScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _sayfalar[_secilenIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _secilenIndex,
+        onTap: (index) => setState(() => _secilenIndex = index),
+        selectedItemColor: const Color.fromARGB(255, 138, 52, 96),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_month),
+            label: 'Takvim',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Analiz'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+        ],
+      ),
     );
   }
 }

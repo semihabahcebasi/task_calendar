@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:task_calendar/screens/home_screen.dart';
+//import 'package:task_calendar/screens/home_screen.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart'; // Kayıt sayfasına gitmek için
-import 'home_screen.dart'; // Giriş başarılıysa ana sayfaya gitmek için
+//import 'home_screen.dart'; // Giriş başarılıysa ana sayfaya gitmek için
+import 'package:task_calendar/main.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -81,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
+                        builder: (context) => const MainScreen(),
                       ),
                     );
                   } else {
