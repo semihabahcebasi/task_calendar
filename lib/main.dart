@@ -5,14 +5,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:task_calendar/screens/home_screen.dart';
 import 'package:task_calendar/screens/analysis_screen.dart';
 import 'package:task_calendar/screens/profile_screen.dart';
+import 'package:task_calendar/firebase_options.dart';
 
 // GLOBAL DİNLEYİCİ: Uygulama her zaman Light (Aydınlık) modda başlar!
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-
+  //await Firebase.initializeApp();
+  // YENİ - bununla değiştirin
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // Artık SharedPreferences ile cihaz hafızasına bakmıyoruz (KISS Prensibi).
   // Çıkış yapılıp tekrar girildiğinde veya uygulama ilk açıldığında
   // tema her zaman varsayılan aydınlık mod olacaktır.

@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"task-calendar-semiha","appId":"1:194347560421:android:b9b74687e6dd03d017530c","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"task-calendar-semiha","configurations":{"android":"1:194347560421:android:b9b74687e6dd03d017530c","ios":"1:194347560421:ios:c3765023a9d6b68517530c","macos":"1:194347560421:ios:c3765023a9d6b68517530c","web":"1:194347560421:web:6fb6f48b951f7f0917530c","windows":"1:194347560421:web:c671367bc77301cc17530c"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "task-calendar-semiha",
+          "appId": "1:194347560421:android:b9b74687e6dd03d017530c",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "task-calendar-semiha",
+          "configurations": {
+            "android": "1:194347560421:android:b9b74687e6dd03d017530c",
+            "ios": "1:194347560421:ios:c3765023a9d6b68517530c",
+            "macos": "1:194347560421:ios:c3765023a9d6b68517530c",
+            "web": "1:194347560421:web:6fb6f48b951f7f0917530c",
+            "windows": "1:194347560421:web:c671367bc77301cc17530c"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
