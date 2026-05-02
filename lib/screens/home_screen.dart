@@ -35,17 +35,30 @@ class _HomeScreenState extends State<HomeScreen> {
       final ad = await _authService.kullaniciAdiniGetir();
       final avatarId = await _authService.avatarIdGetir();
       final tema = await _authService.temaGetir();
+
+      final kategori =
+          (tema['temaKategori'] == null || tema['temaKategori']!.isEmpty)
+          ? null
+          : tema['temaKategori'];
+      final temaId = (tema['temaId'] == null || tema['temaId']!.isEmpty)
+          ? null
+          : tema['temaId'];
+
+      // Önce görseli cache'le — bitmeden setState çağırma
+      if (kategori != null && temaId != null && mounted) {
+        await precacheImage(
+          AssetImage('assets/temalar/$kategori/$temaId.png'),
+          context,
+        );
+      }
+
+      // Görsel hazır, şimdi state'i güncelle — anında gelir
       if (mounted) {
         setState(() {
           _kullaniciAdi = ad;
           _avatarId = avatarId ?? 'avatar_1';
-          _temaKategori =
-              (tema['temaKategori'] == null || tema['temaKategori']!.isEmpty)
-              ? null
-              : tema['temaKategori'];
-          _temaId = (tema['temaId'] == null || tema['temaId']!.isEmpty)
-              ? null
-              : tema['temaId'];
+          _temaKategori = kategori;
+          _temaId = temaId;
         });
       }
     } catch (_) {}
@@ -107,7 +120,15 @@ class _HomeScreenState extends State<HomeScreen> {
               TemaPicker(
                 secilenKategori: _temaKategori,
                 secilenTema: _temaId,
+                //gecikmeyi önlemek için önce görseli cache'le, sonra kaydet ve state'i güncelle
                 onTemaSec: (kategori, temaId) async {
+                  // Önce yeni görseli cache'le
+                  await precacheImage(
+                    AssetImage('assets/temalar/$kategori/$temaId.png'),
+                    context,
+                  );
+
+                  // Sonra kaydet ve state'i güncelle — artık gecikme olmaz
                   await _authService.temaGuncelle(kategori, temaId);
                   setState(() {
                     _temaKategori = kategori;

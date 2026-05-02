@@ -50,6 +50,20 @@ class _TemaPickerState extends State<TemaPicker> {
     if (widget.secilenKategori != null) {
       _aktifKategori = widget.secilenKategori!;
     }
+
+    // Picker açılınca aktif kategorinin tüm görsellerini cache'le
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _kategoriCachele(_aktifKategori);
+    });
+  }
+
+  // Bir kategorideki tüm görselleri arka planda cache'e al
+  void _kategoriCachele(String kategori) {
+    if (!mounted) return;
+    final temalar = temaListesi[kategori] ?? [];
+    for (final tema in temalar) {
+      precacheImage(AssetImage('assets/temalar/$kategori/$tema.png'), context);
+    }
   }
 
   @override
@@ -65,7 +79,11 @@ class _TemaPickerState extends State<TemaPicker> {
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: ElevatedButton(
-                onPressed: () => setState(() => _aktifKategori = kategori),
+                onPressed: () {
+                  setState(() => _aktifKategori = kategori);
+                  // Kategoriye geçildiğinde görsellerini hemen cache'le
+                  _kategoriCachele(kategori);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: aktif ? Colors.indigo : Colors.grey[300],
                   foregroundColor: aktif ? Colors.white : Colors.black,
