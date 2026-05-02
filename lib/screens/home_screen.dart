@@ -7,7 +7,10 @@ import '../widgets/avatar_picker.dart';
 import '../widgets/tema_picker.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String? temaKategori;
+  final String? temaId;
+
+  const HomeScreen({super.key, this.temaKategori, this.temaId});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -26,6 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _temaKategori = widget.temaKategori;
+    _temaId = widget.temaId;
     _kullaniciAdiniGetir();
   }
 
@@ -34,31 +39,11 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final ad = await _authService.kullaniciAdiniGetir();
       final avatarId = await _authService.avatarIdGetir();
-      final tema = await _authService.temaGetir();
-
-      final kategori =
-          (tema['temaKategori'] == null || tema['temaKategori']!.isEmpty)
-          ? null
-          : tema['temaKategori'];
-      final temaId = (tema['temaId'] == null || tema['temaId']!.isEmpty)
-          ? null
-          : tema['temaId'];
-
-      // Önce görseli cache'le — bitmeden setState çağırma
-      if (kategori != null && temaId != null && mounted) {
-        await precacheImage(
-          AssetImage('assets/temalar/$kategori/$temaId.png'),
-          context,
-        );
-      }
-
-      // Görsel hazır, şimdi state'i güncelle — anında gelir
       if (mounted) {
         setState(() {
           _kullaniciAdi = ad;
           _avatarId = avatarId ?? 'avatar_1';
-          _temaKategori = kategori;
-          _temaId = temaId;
+          // _temaKategori ve _temaId artık burада set edilmiyor
         });
       }
     } catch (_) {}

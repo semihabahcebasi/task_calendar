@@ -1,24 +1,19 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:task_calendar/screens/login_screen.dart'; // Kendi dosya yoluna göre kontrol et
+import 'package:task_calendar/screens/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:task_calendar/screens/home_screen.dart';
 import 'package:task_calendar/screens/analysis_screen.dart';
 import 'package:task_calendar/screens/profile_screen.dart';
 import 'package:task_calendar/firebase_options.dart';
+import 'package:task_calendar/services/auth_service.dart';
 
-// GLOBAL DİNLEYİCİ: Uygulama her zaman Light (Aydınlık) modda başlar!
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  //await Firebase.initializeApp();
-  // YENİ - bununla değiştirin
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // Artık SharedPreferences ile cihaz hafızasına bakmıyoruz (KISS Prensibi).
-  // Çıkış yapılıp tekrar girildiğinde veya uygulama ilk açıldığında
-  // tema her zaman varsayılan aydınlık mod olacaktır.
-
   runApp(const MyApp());
 }
 
@@ -27,18 +22,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ValueListenableBuilder: themeNotifier değiştiğinde tüm uygulamayı yeniden çizer
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (_, ThemeMode currentMode, __) {
         return MaterialApp(
           title: 'Görev Takvimi',
           debugShowCheckedModeBanner: false,
-
-          // Tema Modunu buraya bağlıyoruz
           themeMode: currentMode,
-
-          // AÇIK TEMA AYARLARI
           theme: ThemeData.light().copyWith(
             primaryColor: Colors.indigo,
             scaffoldBackgroundColor: Colors.grey[100],
@@ -47,8 +37,6 @@ class MyApp extends StatelessWidget {
               foregroundColor: Colors.white,
             ),
           ),
-
-          // KOYU TEMA AYARLARI
           darkTheme: ThemeData.dark().copyWith(
             primaryColor: Colors.indigoAccent,
             scaffoldBackgroundColor: const Color(0xFF121212),
@@ -57,22 +45,17 @@ class MyApp extends StatelessWidget {
               foregroundColor: Colors.white,
             ),
           ),
-
-          // home: const LoginScreen(), // BU SATIRI SİLİP AŞAĞIDAKİNİ EKLİYORUZ
           home: StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
             builder: (context, snapshot) {
-              // Eğer Firebase ile bağlantı kurulurken bekleniyorsa, dönen bir çember göster
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(
                   body: Center(child: CircularProgressIndicator()),
                 );
               }
-              // Eğer snapshot içinde data varsa (yani kullanıcı önceden giriş yapmışsa)
               if (snapshot.hasData) {
-                return const MainScreen(); // ← HomeScreen yerine
+                return const SplashScreen();
               }
-              // Eğer kullanıcı giriş yapmamışsa veya kendi isteğiyle çıkış yapmışsa
               return const LoginScreen();
             },
           ),
@@ -82,8 +65,93 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// --- SPLASH EKRANI ---
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _hazirlaVeGec();
+  }
+
+  Future<void> _globalCachele(String assetPath) async {
+    final ImageProvider provider = AssetImage(assetPath);
+    final ImageStream stream = provider.resolve(ImageConfiguration.empty);
+    final completer = Completer<void>();
+    stream.addListener(
+      ImageStreamListener(
+        (_, __) => completer.complete(),
+        onError: (_, __) => completer.complete(),
+      ),
+    );
+    await completer.future;
+  }
+
+  Future<void> _hazirlaVeGec() async {
+    final authService = AuthService();
+
+    final tema = await authService.temaGetir();
+    final kategori =
+        (tema['temaKategori'] == null || tema['temaKategori']!.isEmpty)
+        ? null
+        : tema['temaKategori'];
+    final temaId = (tema['temaId'] == null || tema['temaId']!.isEmpty)
+        ? null
+        : tema['temaId'];
+
+    await Future.wait([
+      if (kategori != null && temaId != null)
+        _globalCachele('assets/temalar/$kategori/$temaId.png'),
+      Future.delayed(const Duration(milliseconds: 1000)),
+    ]);
+
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MainScreen(temaKategori: kategori, temaId: temaId),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: Color.fromARGB(255, 127, 149, 147),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.calendar_month, size: 72, color: Colors.white),
+            SizedBox(height: 16),
+            Text(
+              'Görev Takvimi',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- ANA EKRAN ---
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final String? temaKategori;
+  final String? temaId;
+
+  const MainScreen({super.key, this.temaKategori, this.temaId});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -92,11 +160,17 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _secilenIndex = 0;
 
-  final List<Widget> _sayfalar = [
-    const HomeScreen(),
-    const AnalizScreen(),
-    const ProfilScreen(),
-  ];
+  late final List<Widget> _sayfalar;
+
+  @override
+  void initState() {
+    super.initState();
+    _sayfalar = [
+      HomeScreen(temaKategori: widget.temaKategori, temaId: widget.temaId),
+      const AnalizScreen(),
+      const ProfilScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
