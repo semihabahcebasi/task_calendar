@@ -462,28 +462,17 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         centerTitle: false,
-        backgroundColor: const Color.fromARGB(255, 127, 149, 147),
-        foregroundColor: const Color.fromARGB(255, 0, 0, 0),
-        elevation: 0,
+        backgroundColor: const Color.fromARGB(
+          255,
+          0,
+          0,
+          0,
+        ), // Arka planı şeffaf yapar
+        elevation: 0, // Gölgeyi kaldırır
         actions: [
           IconButton(
             icon: const Icon(Icons.wallpaper),
             onPressed: () => _temaDegistir(),
-          ),
-          ValueListenableBuilder<ThemeMode>(
-            valueListenable: themeNotifier,
-            builder: (_, mode, __) {
-              return IconButton(
-                icon: Icon(
-                  mode == ThemeMode.light ? Icons.dark_mode : Icons.light_mode,
-                ),
-                onPressed: () {
-                  themeNotifier.value = mode == ThemeMode.dark
-                      ? ThemeMode.light
-                      : ThemeMode.dark;
-                },
-              );
-            },
           ),
 
           IconButton(
@@ -537,7 +526,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.6),
+                          color: const Color.fromARGB(
+                            255,
+                            0,
+                            0,
+                            0,
+                          ).withOpacity(0.2),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(

@@ -9,7 +9,7 @@ import 'package:task_calendar/screens/profile_screen.dart';
 import 'package:task_calendar/firebase_options.dart';
 import 'package:task_calendar/services/auth_service.dart';
 
-final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: 'Görev Takvimi',
           debugShowCheckedModeBanner: false,
-          themeMode: currentMode,
+          themeMode: ThemeMode.dark,
           theme: ThemeData.light().copyWith(
             primaryColor: Colors.indigo,
             scaffoldBackgroundColor: Colors.grey[100],
@@ -177,6 +177,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: _sayfalar[_secilenIndex],
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Color.fromARGB(255, 0, 0, 0),
         currentIndex: _secilenIndex,
         onTap: (index) => setState(() => _secilenIndex = index),
         selectedItemColor: const Color.fromARGB(255, 138, 52, 96),
