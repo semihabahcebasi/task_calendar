@@ -160,26 +160,57 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _secilenIndex = 0;
 
-  late final List<Widget> _sayfalar;
+  // YENİ: Tema bilgilerini MainScreen içinde tutuyoruz
+  String? _guncelTemaKategori;
+  String? _guncelTemaId;
 
   @override
   void initState() {
     super.initState();
-    _sayfalar = [
-      HomeScreen(temaKategori: widget.temaKategori, temaId: widget.temaId),
-      const AnalizScreen(),
-      const ProfilScreen(),
-    ];
+    // İlk açılışta SplashScreen'den gelen temayı alıyoruz
+    _guncelTemaKategori = widget.temaKategori;
+    _guncelTemaId = widget.temaId;
+  }
+
+  // YENİ: Alt bardan sekmelere tıklandığında çalışacak fonksiyon
+  void _sekmeDegistir(int index) async {
+    if (index == 0) {
+      // Eğer Takvim sekmesine tıklandıysa, Profil'de tema değişmiş olabilir diye veritabanından taze temayı çekiyoruz.
+      final authService = AuthService();
+      final tema = await authService.temaGetir();
+      if (mounted) {
+        setState(() {
+          _guncelTemaKategori = tema['temaKategori'];
+          _guncelTemaId = tema['temaId'];
+          _secilenIndex = index;
+        });
+      }
+    } else {
+      // Diğer sekmelerde normal geçiş yap
+      setState(() => _secilenIndex = index);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // YENİ: _sayfalar listesini build metodunun içine aldık ki her değişimde güncellenebilsin
+    final List<Widget> sayfalar = [
+      HomeScreen(
+        // MAGIC TOUCH: ValueKey, temanın değiştiğini anladığı an HomeScreen'i eski hafızasından kurtarıp baştan çizer!
+        key: ValueKey("$_guncelTemaKategori-$_guncelTemaId"),
+        temaKategori: _guncelTemaKategori,
+        temaId: _guncelTemaId,
+      ),
+      const AnalizScreen(),
+      ProfileScreen(temaKategori: _guncelTemaKategori, temaId: _guncelTemaId),
+    ];
+
     return Scaffold(
-      body: _sayfalar[_secilenIndex],
+      body: sayfalar[_secilenIndex],
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Color.fromARGB(255, 0, 0, 0),
+        backgroundColor: const Color.fromARGB(255, 0, 0, 0),
         currentIndex: _secilenIndex,
-        onTap: (index) => setState(() => _secilenIndex = index),
+        onTap: _sekmeDegistir, // Tıklama fonksiyonunu güncelledik
         selectedItemColor: const Color.fromARGB(255, 138, 52, 96),
         unselectedItemColor: Colors.grey,
         items: const [
