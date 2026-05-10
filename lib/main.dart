@@ -108,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.wait([
       if (kategori != null && temaId != null)
         _globalCachele('assets/temalar/$kategori/$temaId.png'),
-      Future.delayed(const Duration(milliseconds: 1000)),
+      Future.delayed(const Duration(milliseconds: 100)),
     ]);
 
     if (mounted) {
@@ -124,24 +124,8 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: Color.fromARGB(255, 127, 149, 147),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.calendar_month, size: 72, color: Colors.white),
-            SizedBox(height: 16),
-            Text(
-              'Görev Takvimi',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
+      backgroundColor: Colors.white,
+      body: SizedBox.expand(),
     );
   }
 }
