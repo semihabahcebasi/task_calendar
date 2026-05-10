@@ -39,23 +39,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _profilVerileriniYukle() async {
     try {
-      final ad = await _authService.kullaniciAdiniGetir();
-      final avatarId = await _authService.avatarIdGetir();
-      final temaVerisi = await _authService.temaGetir();
-
       final simdi = DateTime.now();
-      final haftalikVeri = await _authService.haftalikAnalizGetir();
-      final aylikVeri = await _authService.aylikAnalizGetir(
-        simdi.year,
-        simdi.month,
-      );
+
+      // MÜKEMMEL HIZ: Tüm verileri tek tek sırayla değil, AYNI ANDA (Paralel) çekiyoruz!
+      final sonuclar = await Future.wait([
+        _authService.kullaniciAdiniGetir(),
+        _authService.avatarIdGetir(),
+        _authService.temaGetir(),
+        _authService.haftalikAnalizGetir(),
+        _authService.aylikAnalizGetir(simdi.year, simdi.month),
+      ]);
 
       if (mounted) {
         setState(() {
-          _kullaniciAdi = ad;
-          _avatarId = avatarId ?? 'avatar_1';
+          _kullaniciAdi = sonuclar[0] as String?;
+          _avatarId = (sonuclar[1] as String?) ?? 'avatar_1';
+
+          final temaVerisi = sonuclar[2] as Map<String, String?>;
           _temaKategori = temaVerisi['temaKategori'];
           _temaId = temaVerisi['temaId'];
+
+          final haftalikVeri = sonuclar[3] as Map<String, dynamic>;
+          final aylikVeri = sonuclar[4] as Map<String, dynamic>;
+
           _toplamPuan = aylikVeri['toplamPuan'] ?? 0;
 
           int haftalikGorev = haftalikVeri['toplamGorev'] ?? 0;
